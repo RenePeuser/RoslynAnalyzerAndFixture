@@ -50,6 +50,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="docu\AnalyzerAndCodeFix.pptx" />
     <None Include="Diagnostic.nuspec">
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
