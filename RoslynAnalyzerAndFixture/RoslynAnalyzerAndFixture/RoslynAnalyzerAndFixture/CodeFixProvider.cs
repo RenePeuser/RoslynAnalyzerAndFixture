@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
 using System.Threading;
@@ -10,15 +8,14 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
-using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Editing;
 
 namespace RoslynAnalyzerAndFixture
 {
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(RoslynAnalyzerAndFixtureCodeFixProvider)), Shared]
     public class RoslynAnalyzerAndFixtureCodeFixProvider : CodeFixProvider
     {
-        private const string title = "Make uppercase";
+        private const string Title = "Lokalisiere string";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
@@ -35,39 +32,48 @@ namespace RoslynAnalyzerAndFixture
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
             var diagnostic = context.Diagnostics.First();
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
+            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
+                .OfType<LiteralExpressionSyntax>().First();
 
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: title,
-                    createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
-                    equivalenceKey: title),
+                    Title,
+                    c => LocalizeString(context.Document, declaration, c),
+                    Title),
                 diagnostic);
+
         }
 
-        private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Document> LocalizeString(Document document, LiteralExpressionSyntax literalExpressionSyntax, CancellationToken cancellationToken)
         {
-            // Compute new uppercase name.
-            var identifierToken = typeDecl.Identifier;
-            var newName = identifierToken.Text.ToUpperInvariant();
+            // get current syntax root
+            var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken);
 
-            // Get the symbol representing the type to be renamed.
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+            // find node from expected string literal.
+            var currentNode = syntaxRoot.FindNode(literalExpressionSyntax.Span);
 
-            // Produce a new solution that has all references to that type renamed, including the declaration.
-            var originalSolution = document.Project.Solution;
-            var optionSet = originalSolution.Workspace.Options;
-            var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
+            // get the syntax generator of the current document !!!
+            var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
 
-            // Return the new solution with the now-uppercase type name.
-            return newSolution;
+            // create the identifier of the type which has to be created.
+            var identifierName = SyntaxFactory.IdentifierName("ConsoleApp1.TranslatableText");
+
+            // create argument syntax
+            var argument = SyntaxFactory.Argument(literalExpressionSyntax);
+
+            // create the object creation expression.
+            var objectCreationExpressionSyntax = syntaxGenerator.ObjectCreationExpression(identifierName, argument);
+
+            // create a new syntax root.
+            var newRoot = syntaxGenerator.ReplaceNode(syntaxRoot, currentNode, objectCreationExpressionSyntax);
+
+            // return the document with the new root.
+            return document.WithSyntaxRoot(newRoot);
         }
     }
 }

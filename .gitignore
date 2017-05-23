@@ -3,3 +3,8 @@
 ################################################################################
 
 /RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture.Vsix/obj/Debug
+/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture/bin/Debug
+/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture/obj/Debug
+/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture.Test/bin/Debug
+/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture.Test/obj/Debug
+/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture/RoslynAnalyzerAndFixture.Vsix/bin/Debug
